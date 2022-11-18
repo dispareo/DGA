@@ -6,6 +6,12 @@ from datetime import datetime
 from mpmath import *
 from textwrap import wrap
 import re
+from urllib.parse import urlparse
+import socket
+import dns.resolver
+import requests
+
+
 
 """I have commented this as I went, but up top here is a sort of explanation as to what we're doing.
 Just know that I sometimes use "I" and "we" interchangable. I'm really not sure why, but it feels weird to say "I". So if you see "we," it's just me working on it, 
@@ -108,12 +114,11 @@ for i in range(42,52):
     #There is a lot going on here to format them just right. 
     #If I had more python experience, I could probably make this much smoother. But alas, I'm a hacker, not a dev, so a hack-ish solution is what we'll do :)
     
-    actual_domains = []
+    
     domains = list(str(nth)) 
     domains = ''.join(domains)
-    #print(f"[!] The characterset is {(len(domains))} characters")
-    #Cool, now they are printing nicely, and don't have all the commas and ticks between them from list format.
-    #Now that it's in list format, we can peel off the back 60 characters.
+    print(f"[+] The seed for this domain is {domains}")
+    #Cool, now they are printing nicely, and don't have all the commas and ticks between them from list format..
     domain_candidates = []
     #Break our really long string into manageable chunks. The first 2 lines break apart the "final domain" info chunks of 2 numbers
     f = 3
@@ -130,16 +135,25 @@ for i in range(42,52):
     for e in range(len(domain_candidates)):
         if domain_candidates[e] not in vowels:
             no_vowels = no_vowels + domain_candidates[e]
-    print("\nAfter removing Vowels: ", no_vowels)
+    #print("\nAfter removing Vowels: ", no_vowels)
     usable_domain = no_vowels[0:12]
-    print(f"The trimmed 12 characters are {usable_domain}")
+    #print(f"The trimmed 12 characters are {usable_domain}")
     usable_domain += tlds
-    #usable_domain += tlds[tld_index % (len(tlds) - 1)]
+    list_of_domains.append(usable_domain)
+    #tld_index += 1
+    print(f"[+] The domain name is {usable_domain}")
+    #Now that we have some workable domains, let's resolve to DNS
 
-    tld_index += 1
-    print(f"[!]The domain to add to DNS records is {usable_domain}\n")
-
-pause()
-
-
-   
+    try:
+        check_domain = dns.resolver.query(usable_domain, 'A')
+        #web = requests.get(usable_domain)
+        #print(web.text)
+        for ipval in check_domain:
+            print('[+] DNS Lookup', ipval.to_text() + "\n")
+            #If it resolves to DNs, try a web request now 
+            usable_url= "http://"+usable_domain         
+            web = requests.get(usable_url)
+            print(f"[!] Web request results: {web.text}")
+        #print("\n[!] URL " + url + " is part of domain " + check_domain + " and maps to " + (socket.gethostbyname(check_domain)))
+    except:
+        print("[!]An analyst must be watching\n")
